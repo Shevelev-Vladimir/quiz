@@ -17,23 +17,29 @@ class Question
     questions = []
 
     doc.elements.each('questions/question') do |questions_element|
+      # Ассоциативный массив содержащий элементы вопроса.
       question = {}
 
       # Для каждого вопроса собираем время, текст вопроса и варианты ответов.
       questions_element.elements.each do |question_element|
+        # Время на вопрос передаём с ключом time.
         question['time'] = question_element.attributes['time']
         case question_element.name
         when 'text'
+          # Складываем в массив текст вопроса с ключом text.
           question['text'] = question_element.text
-        when 'variants'
-          question_element.elements.each_with_index do |variant, index|
-            question['variants'] << variant.text
-            question['right_answer'] = index if variant.attributes['right']
-            puts question['variants']
+        when 'answers'
+          question_element.elements.each_with_index do |answer, index|
+            if answer.attributes['right']
+              # Сохраняем с ключом true_answer правильный ответ.
+              question['right_answer'] = answer.text
+            else
+              # Остальные варианты ответов складываем с ключами false_answer.
+              question["false_answer_#{index}"] = answer.text
+            end
           end
         end
       end
-
       # добавляем свежесозданый вопрос в массив
       questions << Question.new(question)
     end
@@ -43,23 +49,22 @@ class Question
   end
 
   def initialize(question)
-    @text = question[:text]
-    @time = question[:time]
-    @answer_variants = question[:variants]
-    @right_answer_index = question[:right_answer]
+    @text = question['text']
+    @time = question['time']
+    @answer_answers = question.values_at('question')
   end
 
 # Задаем вопрос, используя массив вариантов ответа
   def ask
-    @answer_variants.each_with_index do |variant, index|
-      puts "#{index + 1}. #{variant}"
+    @answer_answers.each_with_index do |answer, index|
+      puts "#{index + 1}. #{answer}"
     end
 
     user_index = STDIN.gets.chomp.to_i - 1
     @correct = (@right_answer_index == user_index)
   end
 
-  # Возращает true если на вопрос был дан верный ответ
+  # Возвращает true если на вопрос был дан верный ответ
   def correctly_answered?
     @correct
   end
