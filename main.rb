@@ -26,21 +26,26 @@ file_name = parh_data + "/questions.xml"
 begin
   questions = Question.read_questions_from_xml(file_name)
 
-  # счетчик правильных ответов
+  # Счетчик правильных ответов.
   right_answers_counter = 0
 
   questions.each do |question|
     question.show
     question.ask
-    if question.correctly_answered?
-      right_answers_counter += 1
-      puts 'Верно'
-    else
-      puts 'Неверно'
-    end
+    message = 
+      if question.time_over?
+        'Вы не успели.'
+      elsif question.correctly_answered? 
+        right_answers_counter += 1
+        'Верно'
+      else
+        "Неверно. Правильный ответ: #{question.right_answer}."
+      end
+    puts message
   end
 
-  puts "\nУ Вас #{right_answers_counter} правильных ответов из #{questions.size}"
+  puts "\nУ Вас #{right_answers_counter} правильных " \
+    "ответов из #{questions.size}."
 
 rescue Errno::ENOENT => e
   puts "\nФайл не найден. #{e.message}"
