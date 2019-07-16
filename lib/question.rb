@@ -5,6 +5,8 @@ require 'rexml/document'
 
 # Класс Вопрос.
 class Question
+  attr_reader :right_answer
+
   def self.read_questions_from_xml(file_name)
     # Открываем файл.
     file = File.new(file_name, 'r:utf-8')
@@ -19,59 +21,71 @@ class Question
     doc.elements.each('questions/question') do |questions_element|
       # Ассоциативный массив содержащий элементы вопроса.
       question = {}
+      # Время на вопрос передаём с ключом time.
+      question['time'] = questions_element.attributes['time']
+     
+      # Объявляем что в хэше содержится массив, для хранения вариантов ответов.
+      question['answers'] = []
 
       # Для каждого вопроса собираем время, текст вопроса и варианты ответов.
       questions_element.elements.each do |question_element|
-        # Время на вопрос передаём с ключом time.
-        question['time'] = question_element.attributes['time']
         case question_element.name
         when 'text'
           # Складываем в массив текст вопроса с ключом text.
           question['text'] = question_element.text
         when 'answers'
-          question_element.elements.each_with_index do |answer, index|
-            if answer.attributes['right']
-              # Сохраняем с ключом true_answer правильный ответ.
-              question['right_answer'] = answer.text
-            else
-              # Остальные варианты ответов складываем с ключами false_answer.
-              question["false_answer_#{index}"] = answer.text
-            end
+          question_element.elements.each do |answer|
+            # Складываем в массив вариант ответа.
+            question['answers'] << answer.text
+            question['right_answer'] = answer.text if answer.attributes['right']
           end
         end
       end
-      # добавляем свежесозданый вопрос в массив
+      
+      # Добавляем свежесозданый вопрос в массив.
       questions << Question.new(question)
     end
 
-    # возвращаем массив вопросов из метода
+    # Возвращаем массив вопросов из метода.
     questions
   end
 
-  def initialize(question)
-    @text = question['text']
-    @time = question['time']
-    @answer_answers = question.values_at('question')
+  # Конструктор класса, принимающий на вход асс.массив.
+  def initialize(params)
+    @text = params['text']
+    @time = params['time'].to_i
+    @answer_variants = params['answers'].shuffle # Для хранения перемешенных вариантов ответа.
+    @right_answer = params['right_answer'] # Для хранения правильного ответа.
   end
 
 # Задаем вопрос, используя массив вариантов ответа
   def ask
-    @answer_answers.each_with_index do |answer, index|
-      puts "#{index + 1}. #{answer}"
+    # Цикл для проверки ввода пользователя.
+    loop do
+      @answer_variants.each_with_index do |answer, index|
+        puts "#{index + 1}. #{answer}"
+      end
+
+      user_index = STDIN.gets.chomp.to_i - 1
+      @correct = (@right_answer == @answer_variants[user_index])
+      # Выход из цикла, если ввод пользователя входит в установленные рамки.
+      break if (0...@answer_variants.size).include?(user_index)
     end
-
-    user_index = STDIN.gets.chomp.to_i - 1
-    @correct = (@right_answer_index == user_index)
   end
-
-  # Возвращает true если на вопрос был дан верный ответ
+ 
+  # Возвращает true если на вопрос был дан верный ответ.
   def correctly_answered?
     @correct
   end
 
-  # Выводит текст вопроса
+  # Время закончилось?
+  def time_over?
+    Time.now > @end_time
+  end
+
+  # Выводит текст вопроса.
   def show
-    puts
-    puts @text
+    puts "\nУ Вас #{@time} секунд для ввода ответа.\n\n#{@text}"
+    @end_time = Time.now + @time
   end
 end
