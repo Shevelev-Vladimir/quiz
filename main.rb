@@ -28,14 +28,27 @@ begin
 
   # Счетчик правильных ответов.
   right_answers_counter = 0
+  # Переменная для хранения ввода пользователя.
+  user_index = nil
 
   questions.each do |question|
-    question.show
-    question.ask
-    message = 
-      if question.time_over?
+    # Записываем в переменную время, до истечении которого пользователь должен /
+    # ответить на вопрос.
+    end_time = Time.now + question.time
+    puts question
+
+    # Цикл для проверки ввода пользователя.
+    loop do
+      puts question.ask
+      user_index = STDIN.gets.chomp.to_i - 1
+      # Выход из цикла, если ввод пользователя входит в установленные рамки.
+      break if (0...question.answer_variants.size).include?(user_index)
+    end
+
+    message =
+      if question.time_over?(end_time)
         'Вы не успели.'
-      elsif question.correctly_answered? 
+      elsif question.correctly_answered?(user_index)
         right_answers_counter += 1
         'Верно'
       else

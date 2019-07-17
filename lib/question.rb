@@ -5,7 +5,14 @@ require 'rexml/document'
 
 # Класс Вопрос.
 class Question
-  attr_reader :right_answer
+  attr_reader :answer_variants, :right_answer, :time
+
+  # Задаем вопрос, используя массив вариантов ответа
+  def ask
+    @answer_variants.each_with_index do |answer, index|
+      "#{index + 1}. #{answer}"
+    end
+  end
 
   def self.read_questions_from_xml(file_name)
     # Открываем файл.
@@ -23,7 +30,7 @@ class Question
       question = {}
       # Время на вопрос передаём с ключом time.
       question['time'] = questions_element.attributes['time']
-     
+
       # Объявляем что в хэше содержится массив, для хранения вариантов ответов.
       question['answers'] = []
 
@@ -41,7 +48,7 @@ class Question
           end
         end
       end
-      
+
       # Добавляем свежесозданый вопрос в массив.
       questions << Question.new(question)
     end
@@ -54,38 +61,24 @@ class Question
   def initialize(params)
     @text = params['text']
     @time = params['time'].to_i
-    @answer_variants = params['answers'].shuffle # Для хранения перемешенных вариантов ответа.
-    @right_answer = params['right_answer'] # Для хранения правильного ответа.
+    # Для хранения перемешенных вариантов ответа.
+    @answer_variants = params['answers'].shuffle
+    # Для хранения правильного ответа.
+    @right_answer = params['right_answer']
   end
 
-# Задаем вопрос, используя массив вариантов ответа
-  def ask
-    # Цикл для проверки ввода пользователя.
-    loop do
-      @answer_variants.each_with_index do |answer, index|
-        puts "#{index + 1}. #{answer}"
-      end
-
-      user_index = STDIN.gets.chomp.to_i - 1
-      @correct = (@right_answer == @answer_variants[user_index])
-      # Выход из цикла, если ввод пользователя входит в установленные рамки.
-      break if (0...@answer_variants.size).include?(user_index)
-    end
-  end
- 
   # Возвращает true если на вопрос был дан верный ответ.
-  def correctly_answered?
-    @correct
+  def correctly_answered?(user_index)
+    @right_answer == @answer_variants[user_index]
   end
 
   # Время закончилось?
-  def time_over?
-    Time.now > @end_time
+  def time_over?(end_time)
+    Time.now > end_time
   end
 
   # Выводит текст вопроса.
-  def show
-    puts "\nУ Вас #{@time} секунд для ввода ответа.\n\n#{@text}"
-    @end_time = Time.now + @time
+  def to_s
+    "\nУ Вас #{@time} секунд для ввода ответа.\n\n#{@text}"
   end
 end
