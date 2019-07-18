@@ -7,13 +7,6 @@ require 'rexml/document'
 class Question
   attr_reader :answer_variants, :right_answer, :time
 
-  # Задаем вопрос, используя массив вариантов ответа
-  def ask
-    @answer_variants.each_with_index do |answer, index|
-      "#{index + 1}. #{answer}"
-    end
-  end
-
   def self.read_questions_from_xml(file_name)
     # Открываем файл.
     file = File.new(file_name, 'r:utf-8')

@@ -39,7 +39,9 @@ begin
 
     # Цикл для проверки ввода пользователя.
     loop do
-      puts question.ask
+      question.answer_variants.each_with_index do |answer, index|
+        puts "#{index + 1}. #{answer}"
+      end
       user_index = STDIN.gets.chomp.to_i - 1
       # Выход из цикла, если ввод пользователя входит в установленные рамки.
       break if (0...question.answer_variants.size).include?(user_index)
